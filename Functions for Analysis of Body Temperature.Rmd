@@ -1,6 +1,6 @@
 ---
 title: "Body Temperature and Pulse Rate"
-author: "YOUR NAME"
+author: "Juan Ramirez Jr."
 output: html_document
 ---
 
@@ -23,16 +23,16 @@ temp <- read_csv("BodyTemp.csv")
 
 Currently, our data includes Gender as 0 for female and 1 for male, let's fix that in our data.  In the blanks, fill in the best `pipe` to *assign* to `temp` the recoded factor for `Sex` and the recode the values 0 and 1 to Female and Male. (Hint: Look at Cheatsheet for `forcats` and do not use the default `pipe`).
 ```{r}
-temp _____ 
-  mutate(Sex = __________(as.factor(Gender), 
-                             Female = "0", Male = "1" )) 
+temp %>% 
+  mutate(Sex = fct_recode(as.factor(Gender), 
+                             Female = "1", Male = "0" )) 
 ```
 
 
 
 We can use Sex as a factor here to observe differences between body temperature between the identified sexes in the data.  Go ahead and update the visualization with labels or other modifications to make it look nicer.
 ```{r}
-temp %>%   
+temp %>% 
   ggplot(aes(x = Sex, y = BodyTemp)) +
   geom_boxplot()
 ```
@@ -47,7 +47,7 @@ $$C = (F - 32)*(5/9)$$
 Use the code framework below to create a function `fahrenheit_to_celsius`
 ```{r}
 fahrenheit_to_celsius <- function(temp_F) {
-  temp_C <- ____________________  #add formula 
+  temp_C <-(temp_F - 32)*(5/9)  #add formula 
   return(temp_C)
 }
 ```
@@ -65,7 +65,7 @@ fahrenheit_to_celsius(temp$BodyTemp)
 
 And you can create a new variable, called temp_C and assign it to `temp` using the appropriate pipe format.
 ```{r}
-temp _____ 
+temp %>% 
   mutate(temp_C = fahrenheit_to_celsius(BodyTemp))
 ```
 
@@ -73,6 +73,9 @@ Recreate the previous boxplot but for temperature in Celsius instead of Fahrenhe
 
 ```{r}
 #boxplot
+temp %>% 
+  ggplot(aes(x = temp_C, y = BodyTemp)) +
+  geom_boxplot()
 ```
 
 
@@ -86,7 +89,7 @@ $$ K = C + 273.15$$
 
 ```{r}
 celsius_to_kelvin <- function(temp_C) {
-
+  temp_K <- temp_C + 273.15
   return(temp_K)
 }
 
@@ -97,7 +100,10 @@ celsius_to_kelvin(0) #should be 273.15
 
 Now use the two functions created above to calculate temperature in Fahrenheit to Kelvin by creating a function `fahrenheit_to_kelvin()` with argument `temp_F`
 ```{r}
-fahrenheit_to_kelvin <- # fill in function
+fahrenheit_to_kelvin <- function(temp_F){
+  temp_K <- celsius_to_kelvin(fahrenheit_to_celsius(temp_F))
+  return(temp_K)
+}# fill in function
 
 # freezing point of water in Kelvin
 fahrenheit_to_kelvin(32.0) #should be 273.15
@@ -109,6 +115,10 @@ Add a new column to the `temp` data and create a boxplot in Kelvin. Be sure to l
 ```{r}
 # add temp_K column with temperatures in Kelvin
 # create boxplot by Sex in Kelvin.
+temp %>% 
+  mutate(temp_K = fahrenheit_to_kelvin(BodyTemp)) %>% 
+    ggplot(aes(x = Sex, y = temp_K)) +
+    geom_boxplot()
 ```
 
 
@@ -136,7 +146,15 @@ Create a function to calculate a confidence interval for any data set.  The func
 - Call it `conf_interval()`
 
 ```{r}
-
+conf_interval <- function(data, clevel){
+  xbar <- mean(data) 
+  s <- sd(data) 
+  n <- length(data)
+  t <- qt(1-(1-clevel)/2, df = n-1) 
+  LB <- xbar - t*s/sqrt(n) 
+  UB <- xbar + t*s/sqrt(n) 
+  interval <- c(LB, UB) 
+}
 
 # test your function, the output should match the output above
 conf_interval(data = temp$BodyTemp, clevel = 0.95)
@@ -150,10 +168,11 @@ temp_na <- read_csv("temp_na.csv")
 
 Does your function work for this new data? Why or why not?
 ```{r}
-conf_interval(temp_na$BodyTemp)
+conf_interval(temp_na$BodyTemp) 
 ```
 
 >Insert Answer
+#clevel is missing with no default
 
 
 Note that the `length()` function still counts NAs, for example: 
@@ -170,11 +189,24 @@ sum(!is.na(x))
 Thinking back to last week and logicals in R, explain how the above function works:
 
 >Insert Answer
+Sums numbers only if they are not "na"
 
 Now, fix your function to allow for the calculation of a confidence interval with missing data (NAs). 
 
 ```{r}
 #updated function
+conf_interval <- function(data, clevel){
+  xbar <- mean(data(!is.na(x))) 
+  s <- sd(data(!is.na(x))) 
+  n <- length(data(!is.na(x)))
+  t <- qt(1-(1-clevel)/2, df = n-1) 
+  LB <- xbar - t*s/sqrt(n) 
+  UB <- xbar + t*s/sqrt(n) 
+  interval <- c(LB, UB) 
+}
+
+# test your function, the output should match the output above
+conf_interval(data = temp$BodyTemp, clevel = 0.95)
 ```
 
 Test that your function works: 
